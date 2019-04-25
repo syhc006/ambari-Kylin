@@ -7,6 +7,7 @@ config = Script.get_config()
 service_packagedir = os.path.realpath(__file__).split('/scripts')[0]
 tmp_dir = Script.get_tmp_dir()
 hdp_version =  default("/commandParams/version", None)
+downloadlocation = config['configurations']['kylin']['download.location']
 
 ambari_server_hostname = config['clusterHostInfo']['ambari_server_host'][0]
 kylin_download = os.path.join('http://', ambari_server_hostname, 'kylin/kylin-2.5.1.tar.gz')
