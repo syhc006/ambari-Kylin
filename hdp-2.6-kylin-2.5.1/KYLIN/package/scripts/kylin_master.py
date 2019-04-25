@@ -7,6 +7,7 @@ class KylinMaster(Script):
     def install(self, env):
         import params
         env.set_params(params)
+        self.install_packages(env)
         # Create user and group for kylin if they don't exist
         try:
             grp.getgrnam(params.kylin_group)
