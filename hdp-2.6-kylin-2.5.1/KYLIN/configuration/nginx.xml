@@ -2,92 +2,86 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
 <configuration supports_adding_forbidden="true">
-     <property>
-        <name>nginx_port</name>
-        <description>Nginx port</description>
-        <value>81</value>
-    </property>
-    <property>
-        <name>nginx_install_dir</name>
-        <description>Nginx install directory</description>
-        <value>/usr/hdp/2.6.4.0-91/nginx</value>
-    </property>
-    <property>
-        <name>nginx_log_dir</name>
-        <description>Nginx log directory</description>
-        <value>/var/log/nginx</value>
-    </property>
-    <property>
-        <name>nginx_pid_dir</name>
-        <description>Nginx pid directory</description>
-        <value>/var/run/nginx</value>
-    </property>
-    <property>
-        <name>nginx_conf</name>
-        <description>This is the template for nginx.conf file</description>
-        <value>
-#user  nobody;
-worker_processes  auto;
+ <property>
+    <name>nginx_port</name>
+    <description>nginx port</description>
+    <value>80</value>   
+</property>
+  <property>
+    <name>nginx_conf</name>
+    <description>This is the jinja template for nginx.conf file</description>
+    <value>
+# For more information on configuration, see:
+#   * Official English Documentation: http://nginx.org/en/docs/
+#   * Official Russian Documentation: http://nginx.org/ru/docs/
 
-error_log  {{nginx_log_dir}}/error.log;
-error_log  {{nginx_log_dir}}/error.log  notice;
-error_log  {{nginx_log_dir}}/error.log  info;
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
 
-pid        {{nginx_pid_file}};
-
+# Load dynamic modules. See /usr/share/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
 
 events {
-    worker_connections  1024;
+    worker_connections 1024;
 }
 
-
 http {
-    include       mime.types;
-    default_type  application/octet-stream;
+#    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+#                      '$status $body_bytes_sent "$http_referer" '
+#                      '"$http_user_agent" "$http_x_forwarded_for"';
+    log_format  main    
+       '$remote_user [$time_local]  $http_x_Forwarded_for $remote_addr  $request '  
+       '$http_x_forwarded_for '                       
+       '$upstream_addr '                        
+       'ups_resp_time: $upstream_response_time '                        
+       'request_time: $request_time'; 
 
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
+    access_log  /var/log/nginx/access.log  main;
 
-    access_log  {{nginx_log_dir}}/access.log;
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 2048;
 
-    sendfile        on;
-    tcp_nopush      on;
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
 
-    keepalive_timeout  65;
-
-    #gzip  on;
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    # for more information.
+    #include /etc/nginx/conf.d/*.conf;
 
     server {
         listen       {{nginx_port}};
-        server_name  localhost;
+        server_name  kylin.com;
+        root         /usr/share/nginx/html;
 
-        #charset koi8-r;
+        # Load configuration files for the default server block.
+        #include /etc/nginx/default.d/*.conf;
 
         location / {
-             proxy_pass http://kylin.com;
-             proxy_set_header Host $host;
-             proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_pass http://kylin.com; 
+             proxy_set_header Host $host; 
+             proxy_set_header X-Real-IP $remote_addr; 
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; 
         }
 
-
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   html;
+        error_page 404 /404.html;
+            location = /40x.html {
         }
 
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
     }
     upstream kylin.com{
-        ip_hash;
         {{kylin_servers}}
     }
 }
-        </value>
-        <value-attributes>
-            <type>content</type>
-            <show-property-name>true</show-property-name>
-        </value-attributes>
-    </property>
+    </value>
+  </property>
 
 </configuration>

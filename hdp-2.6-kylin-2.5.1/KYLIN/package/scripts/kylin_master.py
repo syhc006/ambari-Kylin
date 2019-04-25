@@ -28,14 +28,31 @@ class KylinMaster(Script):
                   create_parents=True
                   )
         # download kylin-2.5.1.tar.gz
-        Execute('wget {0} -O kylin-2.5.1.tar.gz'.format(params.kylin_download))
+        Execute('cd ' + params.install_dir + '; wget ' + params.downloadlocation + ' -O kylin.tar.gz  ')
         # Install kylin
-        Execute('tar -zxvf kylin-2.5.1.tar.gz -C {0}'.format(params.kylin_install_dir))
+        Execute('cd ' + params.install_dir + '; tar -xvf kylin.tar.gz')
+        Execute('cd ' + params.install_dir + ';rm -rf latest; ln -s apache-kylin* latest')
         # Remove kylin installation file
-        Execute('rm -rf kylin-2.5.1.tar.gz')
+        Execute('rm -rf kylin.tar.gz')
         # Ensure all files owned by kylin user:group
         cmd = format("chown -R {kylin_user}:{kylin_group} {kylin_install_dir}")
         Execute(cmd)
+        # create hdfs's /user/kylin
+        Execute("hadoop fs -test -e /user/kylin;[[ $? -ne 0 ]] && hadoop fs -mkdir /user/kylin;echo 0", user="hdfs")
+        # chown kylin:hdfs to /user/kylin
+        Execute("hadoop fs -chown -R kylin:hdfs /user/kylin", user="hdfs")
+        # create hive's kylin database
+        Execute("hive -e \"create database kylin;\" >> /dev/null 2>&1;echo 0", user="hive")
+       
+    def configure(self, env):
+        import params
+        params.server_mode = "all"
+        env.set_params(params)
+        kylin_properties = InlineTemplate(params.kylin_properties)
+        File(format("{kylin_install_dir}/latest/conf/kylin.properties"),
+             owner=params.kylin_user,
+             group=params.kylin_group,
+             content=kylin_properties)
         # create hadoop_conf_dir
         File(format("{tmp_dir}/kylin_init.sh"),
              content=Template("init.sh.j2"),
@@ -43,28 +60,12 @@ class KylinMaster(Script):
              group=params.kylin_group,
              mode=0o700
              )
-        File(format("{tmp_dir}/kylin_env.rc"),
+         File(format("{tmp_dir}/kylin_env.rc"),
              content=Template("env.rc.j2"),
              owner=params.kylin_user,
              group=params.kylin_group,
              mode=0o700
              )
-        # create hdfs's /user/kylin
-        Execute("hadoop fs -test -e /user/kylin;[[ $? -ne 0 ]] && hadoop fs -mkdir /user/kylin;echo 0", user="hdfs")
-        # chown kylin:hdfs to /user/kylin
-        Execute("hadoop fs -chown -R kylin:hdfs /user/kylin", user="hdfs")
-        # create hive's kylin database
-        Execute("hive -e \"create database kylin;\" >> /dev/null 2>&1;echo 0", user="hive")
-
-    def configure(self, env):
-        import params
-        params.server_mode = "all"
-        env.set_params(params)
-        kylin_properties = InlineTemplate(params.kylin_properties)
-        File(format("{kylin_install_dir}/conf/kylin.properties"),
-             owner=params.kylin_user,
-             group=params.kylin_group,
-             content=kylin_properties)
         Execute(format("chown -R {kylin_user}:{kylin_group} {kylin_log_dir} {kylin_pid_dir}"))
         cmd = format("sh {tmp_dir}/kylin_init.sh")
         Execute(cmd, user=params.kylin_user)
@@ -78,13 +79,13 @@ class KylinMaster(Script):
         env.set_params(params)
         self.configure(env)
         cmd = format(
-            ". {tmp_dir}/kylin_env.rc;{kylin_install_dir}/bin/kylin.sh start;sleep 5s;cp -rf {kylin_install_dir}/pid {kylin_pid_file}")
+            ". {tmp_dir}/kylin_env.rc;{kylin_install_dir}/latest/bin/kylin.sh start;sleep 5s;cp -rf {kylin_install_dir}/latest/pid /var/run/kylin.pid")
         Execute(cmd, user=params.kylin_user)
 
     def stop(self, env):
         import params
         env.set_params(params)
-        cmd = format("{kylin_install_dir}/bin/kylin.sh stop")
+        cmd = format(". {tmp_dir}/kylin_env.rc;{kylin_install_dir}/latest/bin/kylin.sh stop")
         File(params.kylin_pid_file,
              action="delete",
              owner=params.kylin_user
