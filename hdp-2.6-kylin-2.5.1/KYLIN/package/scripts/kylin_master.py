@@ -33,7 +33,7 @@ class KylinMaster(Script):
         Execute('cd ' + params.kylin_install_dir + '; tar -xvf kylin.tar.gz')
         Execute('cd ' + params.kylin_install_dir + ';rm -rf latest; ln -s apache-kylin* latest')
         # Remove kylin installation file
-        Execute('rm -rf kylin.tar.gz')
+        Execute('cd ' + params.kylin_install_dir + ';rm -rf kylin.tar.gz')
         # Ensure all files owned by kylin user:group
         cmd = format("chown -R {kylin_user}:{kylin_group} {kylin_install_dir}")
         Execute(cmd)

@@ -33,7 +33,7 @@ class KylinQuery(Script):
         Execute('cd ' + params.kylin_install_dir + '; tar -xvf kylin.tar.gz')
         Execute('cd ' + params.kylin_install_dir + ';rm -rf latest; ln -s apache-kylin* latest')
         # Remove kylin installation file
-        Execute('rm -rf kylin.tar.gz')
+        Execute('cd ' + params.kylin_install_dir + ';rm -rf kylin.tar.gz')
         # Ensure all files owned by kylin user:group
         cmd = format("chown -R {kylin_user}:{kylin_group} {kylin_install_dir}")
         Execute(cmd)
@@ -62,10 +62,6 @@ class KylinQuery(Script):
         Execute(format("chown -R {kylin_user}:{kylin_group} {kylin_log_dir} {kylin_pid_dir}"))
         cmd = format("sh {tmp_dir}/kylin_init.sh")
         Execute(cmd, user=params.kylin_user)
-        cmd = format("sh {kylin_install_dir}/latest/bin/check-env.sh")
-        Execute(cmd, user="hdfs")
-        # chown kylin:hdfs to /kylin
-        Execute("hadoop fs -chown -R kylin:hdfs /kylin", user="hdfs")
 
     def start(self, env):
         import params
