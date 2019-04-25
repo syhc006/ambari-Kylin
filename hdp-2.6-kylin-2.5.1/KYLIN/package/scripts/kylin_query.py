@@ -28,10 +28,10 @@ class KylinQuery(Script):
                   create_parents=True
                   )
         # download kylin-2.5.1.tar.gz
-        Execute('cd ' + params.install_dir + '; wget ' + params.downloadlocation + ' -O kylin.tar.gz  ')
+        Execute('cd ' + params.kylin_install_dir + '; wget ' + params.downloadlocation + ' -O kylin.tar.gz  ')
         # Install kylin
-        Execute('cd ' + params.install_dir + '; tar -xvf kylin.tar.gz')
-        Execute('cd ' + params.install_dir + ';rm -rf latest; ln -s apache-kylin* latest')
+        Execute('cd ' + params.kylin_install_dir + '; tar -xvf kylin.tar.gz')
+        Execute('cd ' + params.kylin_install_dir + ';rm -rf latest; ln -s apache-kylin* latest')
         # Remove kylin installation file
         Execute('rm -rf kylin.tar.gz')
         # Ensure all files owned by kylin user:group
@@ -53,7 +53,7 @@ class KylinQuery(Script):
              group=params.kylin_group,
              mode=0o700
              )
-         File(format("{tmp_dir}/kylin_env.rc"),
+        File(format("{tmp_dir}/kylin_env.rc"),
              content=Template("env.rc.j2"),
              owner=params.kylin_user,
              group=params.kylin_group,

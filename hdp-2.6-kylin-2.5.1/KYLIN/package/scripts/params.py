@@ -42,10 +42,5 @@ kylin_servers = ';'.join("server " + i + ":" + kylin_web_port for i in server_cl
 hadoop_conf_dir = kylin_install_dir + "/conf/hadoop_conf"
 
 # ngnix
-nginx_download = os.path.join('http://', ambari_server_hostname, 'kylin/nginx-1.8.1.tar.gz')
-nginx_install_dir = config['configurations']['nginx']['nginx_install_dir']
-nginx_conf = config['configurations']['nginx']['nginx_conf']
-nginx_port = config['configurations']['nginx']['nginx_port']
-nginx_log_dir = config['configurations']['nginx']['nginx_log_dir']
-nginx_pid_dir = config['configurations']['nginx']['nginx_pid_dir']
-nginx_pid_file = format("{nginx_pid_dir}/nginx.pid")
+nginx_conf=config['configurations']['nginx']['nginx_conf']
+nginx_port=config['configurations']['nginx']['nginx_port']
